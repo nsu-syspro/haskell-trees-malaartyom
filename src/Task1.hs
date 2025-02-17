@@ -58,8 +58,10 @@ itorder leaf tree = case tree of
         (Branch a l r) -> itorder leaf l ++ [a] ++ itorder leaf r
         
 
-postorder :: a
-postorder = error "Implement me "
+postorder :: Maybe a -> Tree a -> [a]
+postorder leaf tree = case tree of
+        Leaf           -> maybeToList leaf
+        (Branch a l r) -> postorder leaf l ++ postorder leaf r ++ [a]
 
 -- | Returns values of given 'Forest' separated by optional separator
 -- where each 'Tree' is traversed in specified 'Order' with optional leaf value
