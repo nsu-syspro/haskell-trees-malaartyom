@@ -37,7 +37,29 @@ torder :: Order    -- ^ Order of resulting traversal
        -> Maybe a  -- ^ Optional leaf value
        -> Tree a   -- ^ Tree to traverse
        -> [a]      -- ^ List of values in specified order
-torder = error "TODO: define torder"
+torder order leaf tree = case order of
+        PreOrder -> pretorder leaf tree
+        InOrder -> itorder leaf tree
+        PostOrder -> postorder leaf tree
+
+maybeToList :: Maybe a -> [a]
+maybeToList Nothing = []
+maybeToList (Just x) = [x]
+
+-- TODO: Write comments 
+pretorder :: Maybe a -> Tree a -> [a]
+pretorder leaf tree = case tree of
+        Leaf           -> maybeToList leaf
+        (Branch a l r) -> [a] ++ pretorder leaf l ++ pretorder leaf r
+
+itorder :: Maybe a -> Tree a -> [a]
+itorder leaf tree = case tree of
+        Leaf           -> maybeToList leaf         
+        (Branch a l r) -> itorder leaf l ++ [a] ++ itorder leaf r
+        
+
+postorder :: a
+postorder = error "Implement me "
 
 -- | Returns values of given 'Forest' separated by optional separator
 -- where each 'Tree' is traversed in specified 'Order' with optional leaf value
