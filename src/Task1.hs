@@ -12,7 +12,7 @@ import Prelude hiding (foldl, foldr)
 
 -- | Binary tree
 data Tree a = Leaf | Branch a (Tree a) (Tree a)
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Forest (i.e. list of 'Tree's)
 type Forest a = [Tree a]
