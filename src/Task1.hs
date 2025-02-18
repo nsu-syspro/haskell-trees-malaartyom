@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wno-unused-matches #-}
 -- The above pragma enables all warnings
 
 module Task1 where
@@ -54,9 +55,9 @@ pretorder leaf tree = case tree of
 
 itorder :: Maybe a -> Tree a -> [a]
 itorder leaf tree = case tree of
-        Leaf           -> maybeToList leaf         
+        Leaf           -> maybeToList leaf
         (Branch a l r) -> itorder leaf l ++ [a] ++ itorder leaf r
-        
+
 
 postorder :: Maybe a -> Tree a -> [a]
 postorder leaf tree = case tree of
@@ -74,11 +75,17 @@ postorder leaf tree = case tree of
 -- ".|.C.|.A.B."
 -- >>> forder PostOrder (Just '|') (Just '.') [Leaf, Branch 'C' Leaf Leaf, Branch 'A' Leaf (Branch 'B' Leaf Leaf)]
 -- ".|..C|...BA"
+
+intercalate :: [a] -> [[a]] -> [a]
+intercalate _ [] = []
+intercalate _ [x] = x
+intercalate sep (x:xs) = x ++ sep ++ intercalate sep xs
 --
 forder :: Order     -- ^ Order of tree traversal
        -> Maybe a   -- ^ Optional separator between resulting tree orders
        -> Maybe a   -- ^ Optional leaf value
        -> Forest a  -- ^ List of trees to traverse
        -> [a]       -- ^ List of values in specified tree order
-forder = error "TODO: define forder"
-
+forder order sep leaf forest = case sep of
+      Nothing  -> concatMap (torder order leaf) forest
+      (Just x) -> intercalate [x] (map (torder order leaf) forest)
