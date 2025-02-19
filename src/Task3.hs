@@ -9,7 +9,7 @@ import Prelude hiding (compare, foldl, foldr, Ordering(..))
 
 import Task1 (Tree(..))
 
-import Task2 (Cmp, Ordering (..), listToBST, bstToList, tinsert, tlookup, tdelete)
+import Task2 (Cmp, listToBST, bstToList, tinsert, tlookup, tdelete, compare)
 
 -- * Type definitions
 
@@ -106,6 +106,4 @@ mdelete key = tdelete compareKeys (key, undefined)
 
 
 compareKeys :: Ord k => Cmp (k, v)
-compareKeys (x, _) (y, _) | x < y     = LT
-                          | x > y     = GT
-                          | otherwise = EQ
+compareKeys (x, _) (y, _) =  compare x y

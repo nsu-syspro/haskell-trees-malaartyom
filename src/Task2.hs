@@ -80,20 +80,28 @@ bstToList = torder InOrder Nothing
 -- False
 --
 isBST :: Cmp a -> Tree a -> Bool
-isBST cmp tree = case tree of
-      Leaf           -> True
-      (Branch x l r) -> isCorrectLeft cmp x l && isCorrectRight cmp x r
+isBST cmp tree = isBST' cmp tree Nothing Nothing
 
 
-isCorrectLeft :: Cmp a -> a -> Tree a -> Bool
-isCorrectLeft cmp x l = case l of
-      Leaf             -> True
-      (Branch y yl yr) -> cmp x y == GT && isCorrectLeft cmp y yl && isCorrectRight cmp y yr
+-- | Helper function to check if given tree is valid binary search tree
+-- 
+-- Usage example:
+-- 
+-- >>> isBST' compare (Branch 2 (Branch 1 Leaf Leaf) (Branch 3 Leaf Leaf)) Nothing Nothing 
+-- True
+-- >>> isBST' compare (Leaf :: Tree Char) Nothing Nothing
+-- True
+-- >>> isBST' compare (Branch 5 (Branch 1 Leaf Leaf) (Branch 3 Leaf Leaf))
+-- False
+--
 
-isCorrectRight :: Cmp a -> a -> Tree a -> Bool
-isCorrectRight cmp x r = case r of
-      Leaf             -> True
-      (Branch y yl yr) -> cmp x y == LT && isCorrectLeft cmp y yl && isCorrectRight cmp y yr
+isBST' :: Cmp a -> Tree a -> Maybe a -> Maybe a -> Bool
+isBST' _ Leaf _ _                    = True
+isBST' cmp (Branch x l r) minV maxV  =
+      maybe True (\minX -> cmp minX x == LT) minV &&
+      maybe True (\maxX -> cmp x maxX == LT) maxV &&
+      isBST' cmp l minV (Just x) &&
+      isBST' cmp r (Just x) maxV
 
 
 -- | Searches given binary search tree for
@@ -140,7 +148,7 @@ tinsert cmp x tree = case tree of
       Leaf             -> Branch x Leaf Leaf
       (Branch val l r) -> case cmp x val of
             LT -> Branch val (tinsert cmp x l) r
-            GT -> Branch val l (tinsert cmp x r) -- TODO: Compare and insert 
+            GT -> Branch val l (tinsert cmp x r)
             EQ -> Branch x l r
 
 -- | Deletes given value from given binary search tree
@@ -158,24 +166,20 @@ tinsert cmp x tree = case tree of
 --
 tdelete :: Cmp a -> a -> Tree a -> Tree a
 tdelete cmp x tree = case tree of
-      Leaf                    -> Leaf
-      (Branch val Leaf r)     -> case cmp x val of
-            LT -> Branch val (tdelete cmp x Leaf) r
-            GT -> Branch val Leaf (tdelete cmp x r) -- TODO: Compare and delete
-            EQ -> r
-      (Branch val l Leaf)      -> case cmp x val of
-            LT -> Branch val (tdelete cmp x l) Leaf
-            GT -> Branch val l (tdelete cmp x Leaf)
-            EQ -> l
-      (Branch val l r)        -> case cmp x val of
-            LT -> Branch val (tdelete cmp x l) r
-            GT -> Branch val l (tdelete cmp x r)
-            EQ -> Branch (mostLeft r) l (tdelete cmp (mostLeft r) r)
+    Leaf -> Leaf
+    Branch val Leaf r -> compareAndDelete cmp x val Leaf r
+    Branch val l Leaf -> compareAndDelete cmp x val l Leaf
+    Branch val l r -> compareAndDelete cmp x val l r
 
 
 -- I'm sorry i'm tired of leaving comments :(
-
-
+compareAndDelete :: Cmp a -> a -> a -> Tree a -> Tree a -> Tree a
+compareAndDelete cmp x val l r = case cmp x val of
+    LT -> Branch val (tdelete cmp x l) r
+    GT -> Branch val l (tdelete cmp x r)
+    EQ -> case l of
+        Leaf -> r
+        _    -> Branch (mostLeft r) l (tdelete cmp (mostLeft r) r)
 
 foldr:: (a -> b -> b) -> b -> [a] -> b
 foldr _ s []     = s
@@ -185,7 +189,7 @@ foldr f s (x:xs) = foldr f (x `f` s) xs
 mostLeft :: Tree a -> a
 mostLeft Leaf              = error ""
 mostLeft (Branch x Leaf _) = x
-mostLeft (Branch _ l _)    = mostLeft l 
+mostLeft (Branch _ l _)    = mostLeft l
 
 -- In this version of the solution these functions aren't used, but i don't want to delete them 
 defaultLeft :: Tree a -> Tree a
