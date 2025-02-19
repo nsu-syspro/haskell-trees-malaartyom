@@ -92,6 +92,18 @@ mdelete :: Ord k => k -> Map k v -> Map k v
 mdelete key = tdelete compareKeys (key, undefined)
 
 
+-- | Compares two tuples (key, value) using keys
+-- Returns Ordering.LT if x < y, Ordering.GT if x >y and Ordering.EQ otherwise
+--
+-- Usage example
+-- 
+-- >>> compareKeys ('a', 1) ('b', -1)
+-- LT
+-- >>> compareKeys (12, 'a') (1, 'c')
+-- GT
+-- >>> compareKeys ("abc", 'd') ("abc", 'k')
+-- EQ
+
 
 compareKeys :: Ord k => Cmp (k, v)
 compareKeys (x, _) (y, _) | x < y     = LT
