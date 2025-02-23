@@ -1,19 +1,20 @@
 {-# OPTIONS_GHC -Wall #-}
 -- The above pragma enables all warnings
 
-module Task2 where
+ module Task2 where
 
 -- Explicit import of Prelude to hide functions
 -- that are not supposed to be used in this assignment
 import Prelude hiding (compare, foldl, foldr, Ordering(..))
 
-import Task1 (Tree(..))
+import Task1 (Tree(..), torder, Order(InOrder))
+import Data.Maybe (fromMaybe)
 
 -- * Type definitions
 
 -- | Ordering enumeration
 data Ordering = LT | EQ | GT
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Binary comparison function indicating whether first argument is less, equal or
 -- greater than the second one (returning 'LT', 'EQ' or 'GT' respectively)
@@ -33,7 +34,9 @@ type Cmp a = a -> a -> Ordering
 -- GT
 --
 compare :: Ord a => Cmp a
-compare = error "TODO: define compare"
+compare x y | x < y      = LT
+            | x == y     = EQ
+            | otherwise  = GT
 
 -- | Conversion of list to binary search tree
 -- using given comparison function
@@ -46,7 +49,7 @@ compare = error "TODO: define compare"
 -- Leaf
 --
 listToBST :: Cmp a -> [a] -> Tree a
-listToBST = error "TODO: define listToBST"
+listToBST cmp = foldr (tinsert cmp) Leaf
 
 -- | Conversion from binary search tree to list
 --
@@ -62,7 +65,7 @@ listToBST = error "TODO: define listToBST"
 -- []
 --
 bstToList :: Tree a -> [a]
-bstToList = error "TODO: define bstToList"
+bstToList = torder InOrder Nothing
 
 -- | Tests whether given tree is a valid binary search tree
 -- with respect to given comparison function
@@ -77,7 +80,29 @@ bstToList = error "TODO: define bstToList"
 -- False
 --
 isBST :: Cmp a -> Tree a -> Bool
-isBST = error "TODO: define isBST"
+isBST cmp tree = isBST' cmp tree Nothing Nothing
+
+
+-- | Helper function to check if given tree is valid binary search tree
+-- 
+-- Usage example:
+-- 
+-- >>> isBST' compare (Branch 2 (Branch 1 Leaf Leaf) (Branch 3 Leaf Leaf)) Nothing Nothing 
+-- True
+-- >>> isBST' compare (Leaf :: Tree Char) Nothing Nothing
+-- True
+-- >>> isBST' compare (Branch 5 (Branch 1 Leaf Leaf) (Branch 3 Leaf Leaf))
+-- False
+--
+
+isBST' :: Cmp a -> Tree a -> Maybe a -> Maybe a -> Bool
+isBST' _ Leaf _ _                    = True
+isBST' cmp (Branch x l r) minV maxV  =
+      maybe True (\minX -> cmp minX x == LT) minV &&
+      maybe True (\maxX -> cmp x maxX == LT) maxV &&
+      isBST' cmp l minV (Just x) &&
+      isBST' cmp r (Just x) maxV
+
 
 -- | Searches given binary search tree for
 -- given value with respect to given comparison
@@ -95,7 +120,13 @@ isBST = error "TODO: define isBST"
 -- Just 2
 --
 tlookup :: Cmp a -> a -> Tree a -> Maybe a
-tlookup = error "TODO: define tlookup"
+tlookup cmp x tree = case tree of
+            Leaf             -> Nothing
+            (Branch val l r) -> case cmp x val of
+                  LT -> tlookup cmp x l
+                  GT -> tlookup cmp x r
+                  EQ -> Just val
+
 
 -- | Inserts given value into given binary search tree
 -- preserving its BST properties with respect to given comparison
@@ -113,7 +144,12 @@ tlookup = error "TODO: define tlookup"
 -- Branch 'a' Leaf Leaf
 --
 tinsert :: Cmp a -> a -> Tree a -> Tree a
-tinsert = error "TODO: define tinsert"
+tinsert cmp x tree = case tree of
+      Leaf             -> Branch x Leaf Leaf
+      (Branch val l r) -> case cmp x val of
+            LT -> Branch val (tinsert cmp x l) r
+            GT -> Branch val l (tinsert cmp x r)
+            EQ -> Branch x l r
 
 -- | Deletes given value from given binary search tree
 -- preserving its BST properties with respect to given comparison
@@ -129,4 +165,54 @@ tinsert = error "TODO: define tinsert"
 -- Leaf
 --
 tdelete :: Cmp a -> a -> Tree a -> Tree a
-tdelete = error "TODO: define tdelete"
+tdelete cmp x tree = case tree of
+    Leaf -> Leaf
+    Branch val Leaf r -> compareAndDelete cmp x val Leaf r
+    Branch val l Leaf -> compareAndDelete cmp x val l Leaf
+    Branch val l r -> compareAndDelete cmp x val l r
+
+
+-- I'm sorry i'm tired of leaving comments :(
+compareAndDelete :: Cmp a -> a -> a -> Tree a -> Tree a -> Tree a
+compareAndDelete cmp x val l r = case cmp x val of
+    LT -> Branch val (tdelete cmp x l) r
+    GT -> Branch val l (tdelete cmp x r)
+    EQ -> case l of
+        Leaf -> r
+        _    -> Branch (mostLeft r) l (tdelete cmp (mostLeft r) r)
+
+foldr:: (a -> b -> b) -> b -> [a] -> b
+foldr _ s []     = s
+foldr f s (x:xs) = foldr f (x `f` s) xs
+
+-- compareAndThen ::Cmp a -> a -> a -
+mostLeft :: Tree a -> a
+mostLeft Leaf              = error ""
+mostLeft (Branch x Leaf _) = x
+mostLeft (Branch _ l _)    = mostLeft l
+
+-- In this version of the solution these functions aren't used, but i don't want to delete them 
+defaultLeft :: Tree a -> Tree a
+defaultLeft tree = fromMaybe Leaf (left tree)
+
+
+defualtRight :: Tree a -> Tree a
+defualtRight tree = fromMaybe Leaf (right tree)
+
+defaultValue :: a -> Tree a -> a
+defaultValue val tree = fromMaybe val (value tree)
+
+
+left :: Tree a -> Maybe (Tree a)
+left Leaf             = Nothing
+left (Branch _ l _)   = Just l
+
+
+right :: Tree a -> Maybe (Tree a)
+right Leaf           = Nothing
+right (Branch _ _ r) = Just r
+
+value :: Tree a -> Maybe a
+value Leaf             = Nothing
+value (Branch val _ _) = Just val
+

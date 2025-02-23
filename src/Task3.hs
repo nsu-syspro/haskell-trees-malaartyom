@@ -9,6 +9,8 @@ import Prelude hiding (compare, foldl, foldr, Ordering(..))
 
 import Task1 (Tree(..))
 
+import Task2 (Cmp, listToBST, bstToList, tinsert, tlookup, tdelete, compare)
+
 -- * Type definitions
 
 -- | Tree-based map
@@ -26,7 +28,7 @@ type Map k v = Tree (k, v)
 -- Leaf
 --
 listToMap :: Ord k => [(k, v)] -> Map k v
-listToMap = error "TODO: define listToMap"
+listToMap = listToBST compareKeys
 
 -- | Conversion from 'Map' to association list sorted by key
 --
@@ -38,7 +40,7 @@ listToMap = error "TODO: define listToMap"
 -- []
 --
 mapToList :: Map k v -> [(k, v)]
-mapToList = error "TODO: define mapToList"
+mapToList = bstToList
 
 -- | Searches given 'Map' for a value associated with given key
 --
@@ -48,12 +50,14 @@ mapToList = error "TODO: define mapToList"
 -- Usage example:
 --
 -- >>> mlookup 1 (Branch (2,'a') (Branch (1,'b') Leaf Leaf) (Branch (3,'c') Leaf Leaf))
--- Just 'a'
+-- Just 'b'
 -- >>> mlookup 'a' Leaf
 -- Nothing
 --
 mlookup :: Ord k => k -> Map k v -> Maybe v
-mlookup = error "TODO: define mlookup"
+mlookup key m = case tlookup compareKeys (key, undefined) m of
+              Nothing  -> Nothing
+              Just (_, v) -> Just v
 
 -- | Inserts given key and value into given 'Map'
 --
@@ -70,7 +74,7 @@ mlookup = error "TODO: define mlookup"
 -- Branch (1,'X') Leaf Leaf
 --
 minsert :: Ord k => k -> v -> Map k v -> Map k v
-minsert = error "TODO: define minsert"
+minsert key value = tinsert compareKeys (key, value)
 
 -- | Deletes given key from given 'Map'
 --
@@ -85,4 +89,21 @@ minsert = error "TODO: define minsert"
 -- Leaf
 --
 mdelete :: Ord k => k -> Map k v -> Map k v
-mdelete = error "TODO: define mdelete"
+mdelete key = tdelete compareKeys (key, undefined)
+
+
+-- | Compares two tuples (key, value) using keys
+-- Returns Ordering.LT if x < y, Ordering.GT if x >y and Ordering.EQ otherwise
+--
+-- Usage example
+-- 
+-- >>> compareKeys ('a', 1) ('b', -1)
+-- LT
+-- >>> compareKeys (12, 'a') (1, 'c')
+-- GT
+-- >>> compareKeys ("abc", 'd') ("abc", 'k')
+-- EQ
+
+
+compareKeys :: Ord k => Cmp (k, v)
+compareKeys (x, _) (y, _) =  compare x y
