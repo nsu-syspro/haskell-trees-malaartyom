@@ -116,9 +116,7 @@ forder :: Order     -- ^ Order of tree traversal
        -> Maybe a   -- ^ Optional leaf value
        -> Forest a  -- ^ List of trees to traverse
        -> [a]       -- ^ List of values in specified tree order
-forder order sep leaf forest = case sep of
-      Nothing  -> concatMap (torder order leaf) forest
-      (Just x) -> intercalate [x] (map (torder order leaf) forest)
+forder order sep leaf forest = intercalate (maybeToList sep) (map (torder order leaf) forest)
 -- | intercalate xs xss is equivalent to (concat (intersperse xs xss)).
 --  It inserts the list xs in between the lists in xss and concatenates the result.
 --

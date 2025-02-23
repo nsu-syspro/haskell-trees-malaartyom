@@ -57,7 +57,7 @@ mapToList = bstToList
 mlookup :: Ord k => k -> Map k v -> Maybe v
 mlookup key m = case tlookup compareKeys (key, undefined) m of
               Nothing  -> Nothing
-              (Just x) -> Just (snd x)
+              Just (_, v) -> Just v
 
 -- | Inserts given key and value into given 'Map'
 --
